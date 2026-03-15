@@ -148,15 +148,6 @@ export function RestaurantCompareModal({
             </div>
           </div>
         </div>
-
-        <div className="p-6 border-t border-gray-100">
-          <button
-            onClick={onClose}
-            className="w-full py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium"
-          >
-            关闭
-          </button>
-        </div>
       </div>
     </div>
   );
