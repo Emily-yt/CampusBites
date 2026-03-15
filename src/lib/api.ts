@@ -1,6 +1,6 @@
 import type { Restaurant, Review, MenuItem } from './database.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // 通用请求函数
 async function fetchApi<T>(
