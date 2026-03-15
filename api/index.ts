@@ -866,7 +866,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // PUT 请求 - 保存用户偏好
       if (req.method === 'PUT') {
-        const { taste_types, cuisine_types, budget_preference } = req.body;
+        // 手动解析请求体
+        let body = req.body;
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body);
+          } catch (e) {
+            console.error('Failed to parse request body:', e);
+            return errorResponse(res, 'Invalid JSON body', 400);
+          }
+        }
+        
+        console.log('PUT /preferences received body:', body);
+        
+        const { taste_types, cuisine_types, budget_preference } = body;
         
         const preferences = {
           taste_types: taste_types || [],
@@ -874,13 +887,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           budget_preference: budget_preference || '',
         };
         
+        console.log('Saving preferences to avatar:', preferences);
+        
         // 将偏好数据存储在 avatar 列中
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('users')
           .update({ avatar: JSON.stringify(preferences) })
-          .eq('id', id);
+          .eq('id', id)
+          .select();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw error;
+        }
+        
+        console.log('Preferences saved successfully:', data);
         
         return successResponse(res, {
           id,
