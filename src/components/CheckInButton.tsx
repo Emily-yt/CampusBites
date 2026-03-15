@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, CheckCircle2 } from 'lucide-react';
 import { notifyAchievementUnlocked } from '../lib/achievementNotification';
 import { userApi, API_BASE_URL } from '../lib/api';
 
@@ -133,13 +133,13 @@ export function CheckInButton({ restaurantId, userId }: CheckInButtonProps) {
     <button
       onClick={handleCheckIn}
       disabled={loading}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
         isCheckedIn
-          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-          : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-      } disabled:opacity-50`}
+          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-emerald-600'
+          : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md hover:shadow-lg hover:from-amber-600 hover:to-orange-600'
+      } disabled:opacity-50 disabled:shadow-none`}
     >
-      <MapPin size={16} className={isCheckedIn ? 'fill-current' : ''} />
+      {isCheckedIn ? <CheckCircle2 size={16} /> : <MapPin size={16} />}
       {loading ? '处理中...' : isCheckedIn ? '已打卡' : '打卡'}
     </button>
   );

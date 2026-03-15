@@ -494,7 +494,19 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
                                         {restaurant.rating.toFixed(1)}
                                       </span>
                                       <span>¥{restaurant.avg_price}</span>
+                                      {restaurant.school && (
+                                        <span className="flex items-center gap-0.5">
+                                          <MapPin size={10} className="text-blue-500" />
+                                          {restaurant.school}
+                                        </span>
+                                      )}
                                     </div>
+                                    {restaurant.hours && (
+                                      <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                                        <Clock size={10} />
+                                        {restaurant.hours}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
