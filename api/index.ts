@@ -611,6 +611,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             icon: 'MapPin',
             content: `打卡了 "${checkin.restaurant?.name || '未知餐厅'}"`,
             timestamp: checkin.created_at,
+            restaurant_id: checkin.restaurant?.id,
           });
         }
       }
@@ -624,6 +625,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             icon: 'Heart',
             content: `收藏了 "${favorite.restaurant?.name || '未知餐厅'}"`,
             timestamp: favorite.created_at,
+            restaurant_id: favorite.restaurant?.id,
           });
         }
       }

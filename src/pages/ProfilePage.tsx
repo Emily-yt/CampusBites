@@ -41,6 +41,7 @@ interface Activity {
   content: string;
   timestamp: string;
   icon: string;
+  restaurant_id?: string;
 }
 
 function formatFullDate(dateString: string): string {
@@ -584,7 +585,11 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
               {recentActivities.map((activity) => {
                 const Icon = iconMap[activity.icon] || MessageSquare;
                 return (
-                  <div key={activity.id} className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+                  <div 
+                    key={activity.id} 
+                    onClick={() => activity.restaurant_id && onNavigateToRestaurant(activity.restaurant_id)}
+                    className={`flex items-center gap-3 p-3 bg-amber-50 rounded-lg ${activity.restaurant_id ? 'cursor-pointer hover:bg-amber-100 transition-colors' : ''}`}
+                  >
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                       <Icon className="text-amber-500" size={18} />
                     </div>
@@ -592,7 +597,7 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
                       <p className="text-sm text-gray-800">{activity.content}</p>
                       <p className="text-xs text-gray-400">{formatFullDate(activity.timestamp)}</p>
                     </div>
-                    <ChevronRight className="text-gray-300" size={16} />
+                    {activity.restaurant_id && <ChevronRight className="text-gray-300" size={16} />}
                   </div>
                 );
               })}
