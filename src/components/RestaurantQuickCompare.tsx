@@ -46,7 +46,6 @@ export function RestaurantQuickCompare({ restaurants, onNavigateToRestaurant }: 
 
   function startCompare() {
     if (selectedRestaurants.length >= 2) {
-      setShowSelectModal(false);
       setStage('thinking');
       startAnimation();
     }
@@ -148,7 +147,7 @@ export function RestaurantQuickCompare({ restaurants, onNavigateToRestaurant }: 
       />
 
       {/* 思考动画 */}
-      {showSelectModal && stage === 'thinking' && (
+      {stage === 'thinking' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
             <div className="bg-white border-b border-gray-100 sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
