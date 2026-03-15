@@ -605,13 +605,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 添加打卡活动
       if (checkinsWithRestaurants) {
         for (const checkin of checkinsWithRestaurants) {
-          const date = new Date(checkin.created_at);
           activities.push({
             id: `checkin-${checkin.id}`,
             type: 'checkin',
             icon: 'MapPin',
             content: `打卡了 "${checkin.restaurant?.name || '未知餐厅'}"`,
-            time: `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
             timestamp: checkin.created_at,
           });
         }
@@ -620,13 +618,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 添加收藏活动
       if (favoritesWithRestaurants) {
         for (const favorite of favoritesWithRestaurants) {
-          const date = new Date(favorite.created_at);
           activities.push({
             id: `favorite-${favorite.id}`,
             type: 'favorite',
             icon: 'Heart',
             content: `收藏了 "${favorite.restaurant?.name || '未知餐厅'}"`,
-            time: `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
             timestamp: favorite.created_at,
           });
         }

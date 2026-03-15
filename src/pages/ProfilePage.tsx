@@ -39,8 +39,19 @@ interface Activity {
   id: string;
   type: string;
   content: string;
-  time: string;
+  timestamp: string;
   icon: string;
+}
+
+function formatFullDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 // 图标映射
@@ -587,7 +598,7 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
                     </div>
                     <div className="flex-1">
                       <p className="text-sm text-gray-800">{activity.content}</p>
-                      <p className="text-xs text-gray-400">{activity.time}</p>
+                      <p className="text-xs text-gray-400">{formatFullDate(activity.timestamp)}</p>
                     </div>
                     <ChevronRight className="text-gray-300" size={16} />
                   </div>
