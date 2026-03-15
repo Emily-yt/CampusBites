@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapPin } from 'lucide-react';
 import { notifyAchievementUnlocked } from '../lib/achievementNotification';
-import { userApi } from '../lib/api';
+import { userApi, API_BASE_URL } from '../lib/api';
 
 interface CheckInButtonProps {
   restaurantId: string;
@@ -23,7 +23,7 @@ export function CheckInButton({ restaurantId, userId }: CheckInButtonProps) {
     async function checkStatus() {
       try {
         const response = await fetch(
-          `http://localhost:3001/api/checkins/status/${userId}/${restaurantId}`
+          `${API_BASE_URL}/checkins/status/${userId}/${restaurantId}`
         );
         const data = await response.json();
         if (response.ok) {
@@ -65,7 +65,7 @@ export function CheckInButton({ restaurantId, userId }: CheckInButtonProps) {
       if (isCheckedIn) {
         // 取消打卡
         const response = await fetch(
-          `http://localhost:3001/api/checkins/${userId}/${restaurantId}`,
+          `${API_BASE_URL}/checkins/${userId}/${restaurantId}`,
           {
             method: 'DELETE',
           }
@@ -75,7 +75,7 @@ export function CheckInButton({ restaurantId, userId }: CheckInButtonProps) {
         }
       } else {
         // 打卡
-        const response = await fetch('http://localhost:3001/api/checkins', {
+        const response = await fetch(`${API_BASE_URL}/checkins`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
