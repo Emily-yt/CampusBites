@@ -35,8 +35,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  console.log('Request URL:', req.url);
+  console.log('Request query:', req.query);
+  
   const { path } = req.query;
   const route = Array.isArray(path) ? path.join('/') : path || '';
+  
+  console.log('Processed route:', route);
 
   try {
     if (route === 'health') {
@@ -172,48 +177,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && !route.includes('/')) {
-      const id = route.replace('restaurants/', '');
-      const { data, error } = await supabase
+      const idStr = route.replace('restaurants/', '');
+      console.log('Looking for restaurant with id:', idStr);
+      
+      let data = null;
+      let error = null;
+      
+      const { data: stringData, error: stringError } = await supabase
         .from('restaurants')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', idStr)
+        .maybeSingle();
+      
+      if (stringData) {
+        data = stringData;
+      } else {
+        const numId = parseInt(idStr, 10);
+        if (!isNaN(numId)) {
+          const { data: numData, error: numError } = await supabase
+            .from('restaurants')
+            .select('*')
+            .eq('id', numId)
+            .maybeSingle();
+          data = numData;
+          error = numError;
+        } else {
+          error = stringError;
+        }
+      }
 
-      if (error) throw error;
+      if (error) {
+        console.log('Supabase error:', error);
+        throw error;
+      }
       if (!data) {
+        console.log('No data found for id:', idStr);
         return errorResponse(res, 'Restaurant not found', 404);
       }
 
+      console.log('Found restaurant:', data.name);
       return successResponse(res, data);
     }
 
     if (route.startsWith('restaurants/') && route.includes('/reviews') && req.method === 'GET') {
-      const id = route.replace('/reviews', '').replace('restaurants/', '');
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('restaurant_id', id)
-        .order('created_at', { ascending: false });
+      const idStr = route.replace('/reviews', '').replace('restaurants/', '');
+      const numId = parseInt(idStr, 10);
+      
+      let query = supabase.from('reviews').select('*');
+      if (!isNaN(numId)) {
+        query = query.eq('restaurant_id', numId);
+      } else {
+        query = query.eq('restaurant_id', idStr);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       return successResponse(res, data || []);
     }
 
     if (route.startsWith('restaurants/') && route.includes('/menu') && req.method === 'GET') {
-      const id = route.replace('/menu', '').replace('restaurants/', '');
-      const { data: restaurant, error: restaurantError } = await supabase
-        .from('restaurants')
-        .select('description, avg_price')
-        .eq('id', id)
-        .single();
+      const idStr = route.replace('/menu', '').replace('restaurants/', '');
+      const numId = parseInt(idStr, 10);
+      
+      let restaurantQuery = supabase.from('restaurants').select('description, avg_price');
+      if (!isNaN(numId)) {
+        restaurantQuery = restaurantQuery.eq('id', numId);
+      } else {
+        restaurantQuery = restaurantQuery.eq('id', idStr);
+      }
+      
+      const { data: restaurant, error: restaurantError } = await restaurantQuery.single();
 
       if (restaurantError) throw restaurantError;
 
       if (restaurant?.description) {
         const dishNames = restaurant.description.split(',').map(name => name.trim()).filter(name => name);
         const menuItems = dishNames.map((name, index) => ({
-          id: `${id}-dish-${index}`,
-          restaurant_id: id,
+          id: `${idStr}-dish-${index}`,
+          restaurant_id: idStr,
           name: name,
           price: 0,
           description: '',
@@ -225,11 +267,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return successResponse(res, menuItems);
       }
 
-      const { data, error } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('restaurant_id', id)
-        .order('is_recommended', { ascending: false });
+      let menuQuery = supabase.from('menu_items').select('*');
+      if (!isNaN(numId)) {
+        menuQuery = menuQuery.eq('restaurant_id', numId);
+      } else {
+        menuQuery = menuQuery.eq('restaurant_id', idStr);
+      }
+      
+      const { data, error } = await menuQuery.order('is_recommended', { ascending: false });
 
       if (error) throw error;
       return successResponse(res, data || []);
