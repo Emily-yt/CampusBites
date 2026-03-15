@@ -358,7 +358,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
         </div>
 
         {/* 聊天区域 - 包含侧边栏 */}
-        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden flex relative">
+        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden flex relative h-[640px]">
           {/* 历史会话侧边栏 */}
           <ChatSessionSidebar
             currentSessionId={currentSession?.id || null}
