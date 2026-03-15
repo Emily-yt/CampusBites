@@ -4,6 +4,7 @@ import { ChatSessionSidebar } from '../components/ChatSessionSidebar';
 import { RestaurantCompareModal } from '../components/RestaurantCompareModal';
 import type { Restaurant } from '../lib/database.types';
 import type { Message, ChatSession } from '../lib/chatSession';
+import { API_BASE_URL } from '../lib/api';
 import {
   getOrCreateCurrentSession,
   getSession,
