@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, MapPin, Calendar, Store } from 'lucide-react';
+import { API_BASE_URL } from '../lib/api';
 
 interface CheckIn {
   id: string;
@@ -35,7 +36,7 @@ export function CheckInListModal({ isOpen, onClose, userId, onNavigateToRestaura
     
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/checkins/user/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/checkins/user/${userId}`);
       const result = await response.json();
       console.log('=== 打卡记录API返回 ===');
       console.log('完整响应:', JSON.stringify(result, null, 2));
@@ -51,7 +52,7 @@ export function CheckInListModal({ isOpen, onClose, userId, onNavigateToRestaura
           if (checkin.restaurant?.name === '未知餐厅' && checkin.restaurant?.id) {
             console.log(`发现未知餐厅，尝试单独查询: ${checkin.restaurant.id}`);
             try {
-              const restaurantResponse = await fetch(`http://localhost:3001/api/restaurants/${checkin.restaurant.id}`);
+              const restaurantResponse = await fetch(`${API_BASE_URL}/restaurants/${checkin.restaurant.id}`);
               const restaurantResult = await restaurantResponse.json();
               
               if (restaurantResponse.ok && restaurantResult.data) {
