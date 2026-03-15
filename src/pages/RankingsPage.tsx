@@ -65,6 +65,9 @@ export function RankingsPage({ onNavigateToRestaurant, onBack }: RankingsPagePro
         break;
     }
     
+    // 每种类型的榜单只取前10个餐厅
+    sortedRestaurants = sortedRestaurants.slice(0, 10);
+    
     setRestaurants(sortedRestaurants);
     setCurrentPage(1);
     setLoading(false);
