@@ -249,21 +249,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const idStr = route.replace('/menu', '').replace('restaurants/', '');
       const numId = parseInt(idStr, 10);
       
-      let menuQuery = supabase.from('menu_items').select('*');
-      if (!isNaN(numId)) {
-        menuQuery = menuQuery.eq('restaurant_id', numId);
-      } else {
-        menuQuery = menuQuery.eq('restaurant_id', idStr);
-      }
-      
-      const { data, error } = await menuQuery.order('is_recommended', { ascending: false });
-
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        return successResponse(res, data);
-      }
-      
       let restaurantQuery = supabase.from('restaurants').select('description, avg_price');
       if (!isNaN(numId)) {
         restaurantQuery = restaurantQuery.eq('id', numId);
