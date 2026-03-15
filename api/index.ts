@@ -181,48 +181,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return successResponse(res, selectedRestaurants);
     }
 
-    if (route.startsWith('restaurants/') && !route.includes('/')) {
-      const idStr = route.replace('restaurants/', '');
-      console.log('Looking for restaurant with id:', idStr);
-      console.log('ID type from request:', typeof idStr);
-      
-      let data = null;
-      let error = null;
-      
-      const { data: stringData, error: stringError } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', idStr)
-        .maybeSingle();
-      
-      if (stringData) {
-        data = stringData;
-      } else {
-        const numId = parseInt(idStr, 10);
-        if (!isNaN(numId)) {
-          const { data: numData, error: numError } = await supabase
-            .from('restaurants')
-            .select('*')
-            .eq('id', numId)
-            .maybeSingle();
-          data = numData;
-          error = numError;
+    if (route.startsWith('restaurants/')) {
+      const parts = route.split('/');
+      if (parts.length === 2) {
+        const idStr = parts[1];
+        console.log('Looking for restaurant with id:', idStr);
+        console.log('ID type from request:', typeof idStr);
+        
+        let data = null;
+        let error = null;
+        
+        const { data: stringData, error: stringError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', idStr)
+          .maybeSingle();
+        
+        if (stringData) {
+          data = stringData;
         } else {
-          error = stringError;
+          const numId = parseInt(idStr, 10);
+          if (!isNaN(numId)) {
+            const { data: numData, error: numError } = await supabase
+              .from('restaurants')
+              .select('*')
+              .eq('id', numId)
+              .maybeSingle();
+            data = numData;
+            error = numError;
+          } else {
+            error = stringError;
+          }
         }
-      }
 
-      if (error) {
-        console.log('Supabase error:', error);
-        throw error;
-      }
-      if (!data) {
-        console.log('No data found for id:', idStr);
-        return errorResponse(res, 'Restaurant not found', 404);
-      }
+        if (error) {
+          console.log('Supabase error:', error);
+          throw error;
+        }
+        if (!data) {
+          console.log('No data found for id:', idStr);
+          return errorResponse(res, 'Restaurant not found', 404);
+        }
 
-      console.log('Found restaurant:', data.name);
-      return successResponse(res, data);
+        console.log('Found restaurant:', data.name);
+        return successResponse(res, data);
+      }
     }
 
     if (route.startsWith('restaurants/') && route.includes('/reviews') && req.method === 'GET') {
