@@ -110,6 +110,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) throw error;
 
+      if (data && data.length > 0) {
+        console.log('First restaurant ID:', data[0].id);
+        console.log('ID type:', typeof data[0].id);
+      }
+
       const totalPages = count ? Math.ceil(count / pageSizeNum) : 1;
 
       return successResponse(res, {
@@ -177,13 +182,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && !route.includes('/')) {
-      let idStr = route.replace('restaurants/', '');
-      console.log('Raw restaurant id:', idStr);
-      
-      if (idStr.includes(':')) {
-        idStr = idStr.split(':')[0];
-        console.log('Cleaned restaurant id:', idStr);
-      }
+      const idStr = route.replace('restaurants/', '');
+      console.log('Looking for restaurant with id:', idStr);
+      console.log('ID type from request:', typeof idStr);
       
       let data = null;
       let error = null;
@@ -225,10 +226,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && route.includes('/reviews') && req.method === 'GET') {
-      let idStr = route.replace('/reviews', '').replace('restaurants/', '');
-      if (idStr.includes(':')) {
-        idStr = idStr.split(':')[0];
-      }
+      const idStr = route.replace('/reviews', '').replace('restaurants/', '');
       const numId = parseInt(idStr, 10);
       
       let query = supabase.from('reviews').select('*');
@@ -245,10 +243,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && route.includes('/menu') && req.method === 'GET') {
-      let idStr = route.replace('/menu', '').replace('restaurants/', '');
-      if (idStr.includes(':')) {
-        idStr = idStr.split(':')[0];
-      }
+      const idStr = route.replace('/menu', '').replace('restaurants/', '');
       const numId = parseInt(idStr, 10);
       
       let restaurantQuery = supabase.from('restaurants').select('description, avg_price');

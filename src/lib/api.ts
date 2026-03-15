@@ -31,13 +31,6 @@ async function fetchApi<T>(
   }
 }
 
-function cleanId(id: string): string {
-  if (id.includes(':')) {
-    return id.split(':')[0];
-  }
-  return id;
-}
-
 export const restaurantApi = {
   getAll: (params?: {
     school?: string;
@@ -58,11 +51,11 @@ export const restaurantApi = {
     return fetchApi<{ data: Restaurant[]; pagination: { currentPage: number; pageSize: number; totalItems: number; totalPages: number } }>(`/restaurants?${queryParams.toString()}`);
   },
 
-  getById: (id: string) => fetchApi<Restaurant>(`/restaurants/${cleanId(id)}`),
+  getById: (id: string) => fetchApi<Restaurant>(`/restaurants/${id}`),
 
-  getReviews: (id: string) => fetchApi<Review[]>(`/restaurants/${cleanId(id)}/reviews`),
+  getReviews: (id: string) => fetchApi<Review[]>(`/restaurants/${id}/reviews`),
 
-  getMenu: (id: string) => fetchApi<MenuItem[]>(`/restaurants/${cleanId(id)}/menu`),
+  getMenu: (id: string) => fetchApi<MenuItem[]>(`/restaurants/${id}/menu`),
 
   addReview: (id: string, review: {
     user_name: string;
@@ -126,21 +119,21 @@ export const favoriteApi = {
     fetchApi<Restaurant[]>(`/favorites?user_session=${userSession}`),
 
   checkFavorite: (restaurantId: string, userSession: string) =>
-    fetchApi<boolean>(`/favorites/${cleanId(restaurantId)}/check?user_session=${userSession}`),
+    fetchApi<boolean>(`/favorites/${restaurantId}/check?user_session=${userSession}`),
 
   addFavorite: (restaurantId: string, userSession: string) =>
     fetchApi('/favorites', {
       method: 'POST',
-      body: JSON.stringify({ restaurant_id: cleanId(restaurantId), user_session: userSession }),
+      body: JSON.stringify({ restaurant_id: restaurantId, user_session: userSession }),
     }),
 
   removeFavorite: (restaurantId: string, userSession: string) =>
-    fetchApi(`/favorites/${cleanId(restaurantId)}?user_session=${userSession}`, {
+    fetchApi(`/favorites/${restaurantId}?user_session=${userSession}`, {
       method: 'DELETE',
     }),
 
   toggleFavorite: (restaurantId: string, userSession: string) =>
-    fetchApi<{ isFavorite: boolean; favorite?: any }>(`/favorites/${cleanId(restaurantId)}/toggle`, {
+    fetchApi<{ isFavorite: boolean; favorite?: any }>(`/favorites/${restaurantId}/toggle`, {
       method: 'POST',
       body: JSON.stringify({ user_session: userSession }),
     }),
