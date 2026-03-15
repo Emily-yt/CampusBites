@@ -121,12 +121,6 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
     }
     
     setInputMessage('');
-    
-    // 只在第一次发送消息时隐藏快捷选项
-    const isFirstMessage = messages.length === 1;
-    if (isFirstMessage && !isQuickOption) {
-      setShowQuickOptions(false);
-    }
 
     try {
       // 解析用户输入，提取关键信息
@@ -368,7 +362,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
             </div>
             
             {/* 消息列表 */}
-            <div ref={chatContainerRef} className="h-[460px] overflow-y-auto px-8 py-4 space-y-4">
+            <div ref={chatContainerRef} className="h-[580px] overflow-y-auto px-8 py-4 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
