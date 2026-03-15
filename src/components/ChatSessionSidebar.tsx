@@ -102,10 +102,10 @@ export function ChatSessionSidebar({
   if (!isOpen) return null;
 
   return (
-    <div className="h-full w-64 bg-amber-50/50 border-r border-amber-100 flex-shrink-0">
+    <div className="h-full w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0">
       <div className="h-full flex flex-col">
         {/* 头部 */}
-        <div className="h-14 border-b border-amber-100 flex items-center justify-between px-3">
+        <div className="h-14 border-b border-gray-200 flex items-center justify-between px-3">
           <h3 className="font-semibold text-gray-800 text-base">历史会话</h3>
           <div className="flex items-center gap-1">
             <button
@@ -139,14 +139,14 @@ export function ChatSessionSidebar({
                   onClick={() => handleSessionClick(session.id)}
                   className={`group relative p-2.5 rounded-lg cursor-pointer transition-all ${
                     session.id === currentSessionId
-                      ? 'bg-amber-100 border border-amber-200'
+                      ? 'bg-gray-200 border border-gray-300'
                       : 'hover:bg-white border border-transparent'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${
-                        session.id === currentSessionId ? 'text-amber-800' : 'text-gray-700'
+                        session.id === currentSessionId ? 'text-gray-900' : 'text-gray-700'
                       }`}>
                         {session.name}
                       </p>
@@ -174,7 +174,7 @@ export function ChatSessionSidebar({
         </div>
 
         {/* 底部信息 */}
-        <div className="p-2 border-t border-amber-100 text-xs text-gray-400 text-center bg-amber-100/30">
+        <div className="p-2 border-t border-gray-200 text-xs text-gray-400 text-center bg-gray-100">
           共 {sessions.length} 个会话
         </div>
       </div>

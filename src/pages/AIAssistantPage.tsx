@@ -353,7 +353,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* 页面标题 */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">AI 吃饭助手</h1>
+          <h1 className="text-2xl font-bold text-gray-900">AI 助手</h1>
           <p className="text-gray-600 text-sm mt-1">智能推荐，懂你所想</p>
         </div>
 
