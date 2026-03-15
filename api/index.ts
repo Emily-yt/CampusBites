@@ -556,22 +556,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return errorResponse(res, 'User not found', 404);
       }
 
-      const { data: favorites, error: favoritesError } = await supabase
+      // 获取收藏记录（带餐厅信息）
+      const { data: favoritesWithRestaurants, error: favoritesError } = await supabase
         .from('favorites')
-        .select('id')
-        .eq('user_session', id);
+        .select(`
+          id,
+          created_at,
+          restaurant:restaurant_id (name)
+        `)
+        .eq('user_session', id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
       if (favoritesError) throw favoritesError;
 
-      const { data: checkins, error: checkinsError } = await supabase
+      // 获取打卡记录（带餐厅信息）
+      const { data: checkinsWithRestaurants, error: checkinsError } = await supabase
         .from('checkins')
-        .select('id')
-        .eq('user_id', id);
+        .select(`
+          id,
+          created_at,
+          restaurant:restaurant_id (name)
+        `)
+        .eq('user_id', id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
       if (checkinsError) throw checkinsError;
 
-      const favoritesCount = favorites?.length || 0;
-      const checkinsCount = checkins?.length || 0;
+      const favoritesCount = favoritesWithRestaurants?.length || 0;
+      const checkinsCount = checkinsWithRestaurants?.length || 0;
       const points = 100 + favoritesCount * 10 + checkinsCount * 20;
 
       const badges = [];
@@ -585,6 +599,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         badges.push({ id: '3', name: '探店先锋', icon: 'MapPin', color: 'text-blue-500', bgColor: 'bg-blue-100' });
       }
 
+      // 构建最近活动列表
+      const activities = [];
+      
+      // 添加打卡活动
+      if (checkinsWithRestaurants) {
+        for (const checkin of checkinsWithRestaurants) {
+          activities.push({
+            id: `checkin-${checkin.id}`,
+            type: 'checkin',
+            description: `打卡了 "${checkin.restaurant?.name || '未知餐厅'}"`,
+            timestamp: checkin.created_at,
+          });
+        }
+      }
+      
+      // 添加收藏活动
+      if (favoritesWithRestaurants) {
+        for (const favorite of favoritesWithRestaurants) {
+          activities.push({
+            id: `favorite-${favorite.id}`,
+            type: 'favorite',
+            description: `收藏了 "${favorite.restaurant?.name || '未知餐厅'}"`,
+            timestamp: favorite.created_at,
+          });
+        }
+      }
+      
+      // 按时间排序，取最近的10条
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const recentActivities = activities.slice(0, 10);
+
       return successResponse(res, {
         stats: {
           favorites: favoritesCount,
@@ -592,7 +637,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           points,
         },
         badges,
-        recentActivities: [],
+        recentActivities,
       });
     }
 
