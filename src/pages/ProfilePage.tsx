@@ -94,12 +94,9 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
   // 收藏弹窗状态
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
 
-  // 关闭收藏弹窗并刷新统计数据
+  // 关闭收藏弹窗
   function handleCloseFavoritesModal() {
     setIsFavoritesModalOpen(false);
-    if (user?.id) {
-      fetchUserStats(user.id);
-    }
   }
 
   useEffect(() => {

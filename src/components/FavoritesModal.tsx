@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Heart, Star, Trash2 } from 'lucide-react';
+import { X, Heart, Calendar, Store } from 'lucide-react';
 import { favoriteApi } from '../lib/api';
 import { getUserSession } from '../lib/supabase';
 import type { Restaurant } from '../lib/database.types';
@@ -49,12 +49,40 @@ export function FavoritesModal({ isOpen, onClose, onNavigateToRestaurant }: Favo
     return map[cuisineType] || '🍜';
   }
 
+  // 格式化日期
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return '今天';
+    if (diffDays === 1) return '昨天';
+    if (diffDays < 7) return `${diffDays}天前`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
+    
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  }
+
+  // 格式化完整日期
+  function formatFullDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // 点击背景关闭
   function handleBackdropClick(e: React.MouseEvent) {
     if (e.target === e.currentTarget) {
       onClose();
     }
   }
 
+  // 点击餐厅跳转
   function handleRestaurantClick(restaurantId: string) {
     onClose();
     onNavigateToRestaurant(restaurantId);
@@ -107,7 +135,8 @@ export function FavoritesModal({ isOpen, onClose, onNavigateToRestaurant }: Favo
               {favorites.map((restaurant, index) => (
                 <div
                   key={restaurant.id}
-                  className="p-4 hover:bg-amber-50/50 transition-colors"
+                  onClick={() => handleRestaurantClick(restaurant.id)}
+                  className="p-4 hover:bg-amber-50/50 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-start gap-3">
                     {/* 序号 */}
@@ -115,40 +144,36 @@ export function FavoritesModal({ isOpen, onClose, onNavigateToRestaurant }: Favo
                       {index + 1}
                     </div>
                     
-                    {/* 餐厅图标 */}
-                    <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg flex items-center justify-center text-2xl">
-                      {getCuisineEmoji(restaurant.cuisine_type)}
-                    </div>
-                    
                     {/* 餐厅信息 */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate">
-                        {restaurant.name}
-                      </h3>
-                      <p className="text-sm text-amber-600">{restaurant.cuisine_type}</p>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Star size={12} className="text-yellow-500" /> {restaurant.rating.toFixed(1)}
-                        </span>
-                        <span>¥{restaurant.avg_price}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Store size={16} className="text-amber-500 flex-shrink-0" />
+                        <h3 className="font-semibold text-gray-900 truncate group-hover:text-amber-600 transition-colors">
+                          {restaurant.name}
+                        </h3>
                       </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Calendar size={14} />
+                          {formatDate(restaurant.created_at)}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                          {restaurant.cuisine_type}
+                        </span>
+                      </div>
+                      
+                      {/* 完整日期（悬停显示） */}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatFullDate(restaurant.created_at)}
+                      </p>
                     </div>
                     
-                    {/* 操作按钮 */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => removeFavorite(restaurant.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                        title="取消收藏"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleRestaurantClick(restaurant.id)}
-                        className="px-3 py-1.5 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 transition-colors"
-                      >
-                        查看
-                      </button>
+                    {/* 箭头 */}
+                    <div className="flex-shrink-0 text-gray-300 group-hover:text-amber-400 transition-colors">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
                     </div>
                   </div>
                 </div>
