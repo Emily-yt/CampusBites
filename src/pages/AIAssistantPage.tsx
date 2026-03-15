@@ -158,6 +158,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
           distance: params.distance,
           cuisinePreference: params.cuisinePreference,
           occasion: params.occasion,
+          isGeneralRecommendation: params.isGeneralRecommendation,
           userQuery: content,
         }),
       });
@@ -255,6 +256,16 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
     let distance: number | null = null;
     let cuisinePreference = '';
     let occasion = '';
+    let isGeneralRecommendation = false;
+
+    // 检查是否是通用推荐请求
+    const generalKeywords = ['评分', '推荐', '最好', '不错', '美食', '餐厅'];
+    for (const keyword of generalKeywords) {
+      if (input.includes(keyword)) {
+        isGeneralRecommendation = true;
+        break;
+      }
+    }
 
     // 解析预算 - 更精确的匹配，要求有元/块/预算等关键词
     const budgetMatch = input.match(/(?:预算|人均|不超过|以内|控制在)?\s*(\d+)\s*[元块]/);
@@ -290,7 +301,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       occasion = '快速解决';
     }
 
-    return { budget, distance, cuisinePreference, occasion };
+    return { budget, distance, cuisinePreference, occasion, isGeneralRecommendation };
   }
 
   function handleQuickOption(query: string, event?: React.MouseEvent) {

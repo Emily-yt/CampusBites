@@ -672,14 +672,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route === 'ai/recommend' && req.method === 'POST') {
-      const { budget, distance, cuisinePreference, occasion, userQuery } = req.body;
+      const { budget, distance, cuisinePreference, occasion, isGeneralRecommendation, userQuery } = req.body;
 
       // 检查是否有有效的搜索条件
       const hasValidConditions = 
         (budget !== null && budget !== undefined) || 
         (distance !== null && distance !== undefined) || 
         cuisinePreference || 
-        occasion;
+        occasion ||
+        isGeneralRecommendation;
 
       if (!hasValidConditions) {
         return successResponse(res, {
@@ -733,6 +734,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else if (occasion === '朋友聚会') {
           aiAnalysis = '朋友聚会好去处，这些餐厅很适合大家一起分享美食：';
         }
+      } else if (isGeneralRecommendation) {
+        aiAnalysis = '为你精选了这些评分最高的餐厅，快来看看吧！';
       }
 
       if (budget !== null && budget !== undefined) {
