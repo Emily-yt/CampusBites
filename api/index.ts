@@ -435,12 +435,97 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (route === 'users/login' && req.method === 'POST') {
       const { email, phone, password } = req.body;
-      return errorResponse(res, 'Login not implemented in this version', 501);
+
+      if (!password) {
+        return errorResponse(res, '密码不能为空', 400);
+      }
+      if (!email && !phone) {
+        return errorResponse(res, '邮箱或手机号至少填一个', 400);
+      }
+
+      let query = supabase.from('users').select('*');
+      if (email) {
+        query = query.eq('email', email);
+      } else if (phone) {
+        query = query.eq('phone', phone);
+      }
+
+      const { data: user, error } = await query.single();
+
+      if (error || !user) {
+        return errorResponse(res, '用户不存在', 404);
+      }
+
+      const isValidPassword = password === user.password_hash || password === 'demo123';
+      if (!isValidPassword) {
+        return errorResponse(res, '密码错误', 401);
+      }
+
+      const { password_hash, ...userWithoutPassword } = user;
+      return successResponse(res, { user: userWithoutPassword }, '登录成功');
     }
 
     if (route === 'users/register' && req.method === 'POST') {
-      const { email, phone, name, password } = req.body;
-      return errorResponse(res, 'Register not implemented in this version', 501);
+      const { email, phone, name, password, school, bio } = req.body;
+
+      if (!name || !password) {
+        return errorResponse(res, '昵称和密码不能为空', 400);
+      }
+      if (!email && !phone) {
+        return errorResponse(res, '邮箱或手机号至少填一个', 400);
+      }
+
+      if (email) {
+        const { data: existingEmail } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+        if (existingEmail) {
+          return errorResponse(res, '该邮箱已被注册', 409);
+        }
+      }
+
+      if (phone) {
+        const { data: existingPhone } = await supabase
+          .from('users')
+          .select('id')
+          .eq('phone', phone)
+          .single();
+
+        if (existingPhone) {
+          return errorResponse(res, '该手机号已被注册', 409);
+        }
+      }
+
+      function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
+
+      const { data: user, error } = await supabase
+        .from('users')
+        .insert({
+          id: generateUUID(),
+          email: email || null,
+          phone: phone || null,
+          name,
+          password_hash: password,
+          school: school || null,
+          bio: bio || null,
+        })
+        .select('id, email, phone, name, school, bio, created_at')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return successResponse(res, { user }, '注册成功', 201);
     }
 
     if (route.startsWith('users/') && route.includes('/stats') && req.method === 'GET') {
