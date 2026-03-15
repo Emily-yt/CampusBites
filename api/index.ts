@@ -830,13 +830,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (route.startsWith('users/') && route.includes('/preferences')) {
       const id = route.replace('/preferences', '').replace('users/', '');
-      return successResponse(res, {
-        id,
-        budget: 50,
-        distance: 3,
-        cuisine_preferences: [],
-        updated_at: new Date().toISOString()
-      });
+      
+      // GET 请求 - 获取用户偏好
+      if (req.method === 'GET') {
+        const { data: user, error } = await supabase
+          .from('users')
+          .select('avatar')
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        
+        // 从 avatar 列解析偏好数据
+        let preferences = {
+          taste_types: [],
+          cuisine_types: [],
+          budget_preference: '',
+        };
+        
+        if (user?.avatar) {
+          try {
+            const parsed = JSON.parse(user.avatar);
+            preferences = { ...preferences, ...parsed };
+          } catch (e) {
+            // avatar 不是 JSON 格式，使用默认值
+          }
+        }
+        
+        return successResponse(res, {
+          id,
+          ...preferences,
+          updated_at: new Date().toISOString()
+        });
+      }
+      
+      // PUT 请求 - 保存用户偏好
+      if (req.method === 'PUT') {
+        const { taste_types, cuisine_types, budget_preference } = req.body;
+        
+        const preferences = {
+          taste_types: taste_types || [],
+          cuisine_types: cuisine_types || [],
+          budget_preference: budget_preference || '',
+        };
+        
+        // 将偏好数据存储在 avatar 列中
+        const { error } = await supabase
+          .from('users')
+          .update({ avatar: JSON.stringify(preferences) })
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        return successResponse(res, {
+          id,
+          ...preferences,
+          updated_at: new Date().toISOString()
+        }, '偏好设置已保存');
+      }
     }
 
     return res.status(404).json({
