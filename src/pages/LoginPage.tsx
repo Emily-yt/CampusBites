@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { API_BASE_URL } from '../lib/api';
 
 interface LoginPageProps {
   onBack: () => void;
@@ -8,8 +9,6 @@ interface LoginPageProps {
 
 type AuthMode = 'login' | 'register';
 type LoginType = 'email' | 'phone';
-
-const API_BASE_URL = 'http://localhost:3001/api';
 
 export function LoginPage({ onBack, onLoginSuccess }: LoginPageProps) {
   const [mode, setMode] = useState<AuthMode>('login');
