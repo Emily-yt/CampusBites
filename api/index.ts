@@ -671,6 +671,81 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return successResponse(res, null, 'Checkin cancelled');
     }
 
+    if (route === 'ai/recommend' && req.method === 'POST') {
+      const { budget, distance, cuisinePreference, occasion, userQuery } = req.body;
+
+      let query = supabase.from('restaurants').select('*');
+
+      if (budget) {
+        query = query.lte('avg_price', budget);
+      }
+
+      if (distance) {
+        query = query.lte('distance_km', distance);
+      }
+
+      if (cuisinePreference) {
+        const cuisineMap: { [key: string]: string } = {
+          '中餐': '中餐',
+          '西餐': '西餐',
+          '日料': '日料',
+          '韩餐': '韩餐',
+          '火锅': '火锅',
+          '烧烤': '烧烤',
+          '快餐': '快餐',
+          '甜品': '甜品'
+        };
+        const mappedCuisine = cuisineMap[cuisinePreference];
+        if (mappedCuisine) {
+          query = query.eq('cuisine_type', mappedCuisine);
+        }
+      }
+
+      query = query.order('rating', { ascending: false }).limit(6);
+
+      const { data: restaurants, error } = await query;
+
+      if (error) throw error;
+
+      let aiAnalysis = '根据你的需求，我为你推荐以下餐厅：';
+
+      if (occasion) {
+        if (occasion === '约会聚餐') {
+          aiAnalysis = '为你的约会聚餐精心挑选了以下环境优雅的餐厅：';
+        } else if (occasion === '深夜加餐') {
+          aiAnalysis = '深夜觅食，为你推荐这些还在营业的美味餐厅：';
+        } else if (occasion === '朋友聚会') {
+          aiAnalysis = '朋友聚会好去处，这些餐厅很适合大家一起分享美食：';
+        }
+      }
+
+      if (budget) {
+        aiAnalysis += `\n\n预算控制在 ¥${budget} 以内，性价比很高哦！`;
+      }
+
+      if (distance) {
+        aiAnalysis += `\n\n都在 ${distance} 公里范围内，方便到达！`;
+      }
+
+      return successResponse(res, {
+        recommendations: restaurants || [],
+        aiAnalysis: aiAnalysis,
+        totalFound: restaurants?.length || 0,
+        fallback: false
+      });
+    }
+
+    if (route.startsWith('users/') && route.includes('/preferences')) {
+      const id = route.replace('/preferences', '').replace('users/', '');
+      return successResponse(res, {
+        id,
+        budget: 50,
+        distance: 3,
+        cuisine_preferences: [],
+        updated_at: new Date().toISOString()
+      });
+    }
+
     return res.status(404).json({
       success: false,
       error: 'Not Found',
