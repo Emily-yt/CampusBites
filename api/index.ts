@@ -17,8 +17,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api', routes);
+// Routes - 注意：Vercel 已经将 /api 前缀处理过了，这里不需要再加
+app.use('/', routes);
 
 // Error handling
 app.use(errorHandler);
