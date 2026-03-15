@@ -134,7 +134,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       const params = parseUserInput(content);
 
       // 调用 AI 推荐接口
-      const response = await fetch('http://localhost:3001/api/ai/recommend', {
+      const response = await fetch(`${API_BASE_URL}/ai/recommend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
