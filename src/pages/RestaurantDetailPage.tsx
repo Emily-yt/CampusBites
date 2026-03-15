@@ -127,13 +127,12 @@ export function RestaurantDetailPage({ restaurantId, onBack }: RestaurantDetailP
             {getCuisineEmoji(restaurant.cuisine_type)}
           </div>
           <div className="p-5">
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">{restaurant.name}</h1>
                 <span className="text-sm text-amber-600 font-medium">{restaurant.cuisine_type}</span>
               </div>
             </div>
-            <p className="text-gray-600 mb-4">{restaurant.description}</p>
             
             {/* 核心信息 */}
             <div className="grid grid-cols-3 gap-4 mb-4">
