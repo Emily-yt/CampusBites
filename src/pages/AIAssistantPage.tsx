@@ -70,7 +70,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
     { label: '¥30以内', icon: DollarSign, query: '预算30元以内，推荐便宜好吃的' },
     { label: '深夜食堂', icon: Clock, query: '深夜饿了，推荐还在营业的餐厅' },
     { label: '约会聚餐', icon: Sparkles, query: '约会聚餐，推荐环境好的餐厅' },
-    { label: '附近美食', icon: MapPin, query: '推荐附近1公里内的美食' },
+    { label: '高评分推荐', icon: Star, query: '推荐评分最高的餐厅' },
   ];
 
   // 处理会话切换
@@ -133,6 +133,27 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       // 解析用户输入，提取关键信息
       const params = parseUserInput(content);
 
+      // 添加思考阶段1 - 正在理解
+      const thinkingId1 = Date.now().toString();
+      setMessages((prev) => [...prev, {
+        id: thinkingId1,
+        type: 'ai',
+        content: '让我想想...',
+        timestamp: new Date(),
+        isThinking: true,
+      }]);
+      
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // 添加思考阶段2 - 正在搜索
+      setMessages((prev) => prev.map(msg => 
+        msg.id === thinkingId1 
+          ? { ...msg, content: '正在为你寻找合适的餐厅...' }
+          : msg
+      ));
+      
+      await new Promise(resolve => setTimeout(resolve, 600));
+
       // 调用 AI 推荐接口
       const response = await fetch(`${API_BASE_URL}/ai/recommend`, {
         method: 'POST',
@@ -149,6 +170,9 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       });
 
       const data: { data: AIRecommendation } = await response.json();
+      
+      // 移除思考消息
+      setMessages((prev) => prev.filter(msg => msg.id !== thinkingId1));
 
       // 添加 AI 回复到存储
       const aiMessageData = {
@@ -159,17 +183,33 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       
       addMessageToSession(currentSession.id, aiMessageData);
       
-      // 更新本地状态
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      // 更新本地状态 - 先只显示文本，不显示推荐
+      const aiMessageId = (Date.now() + 1).toString();
+      const aiMessageWithoutRecs: Message = {
+        id: aiMessageId,
         type: 'ai',
         content: data.data.aiAnalysis,
-        recommendations: data.data.recommendations,
         timestamp: new Date(),
       };
       
-      const finalMessages = [...updatedMessages, aiMessage];
-      setMessages(finalMessages);
+      const messagesWithText = [...updatedMessages, aiMessageWithoutRecs];
+      setMessages(messagesWithText);
+      
+      // 延迟显示推荐卡片
+      if (data.data.recommendations && data.data.recommendations.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        const aiMessageWithRecs: Message = {
+          ...aiMessageWithoutRecs,
+          recommendations: data.data.recommendations,
+        };
+        
+        const finalMessages = [...updatedMessages, aiMessageWithRecs];
+        setMessages(finalMessages);
+        
+        // 更新存储
+        addMessageToSession(currentSession.id, aiMessageData);
+      }
       
       // 更新当前会话
       const finalSession = getSession(currentSession.id);
@@ -363,11 +403,22 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
                         : 'bg-amber-50 text-gray-700 rounded-bl-md'
                     }`}
                   >
-                    {message.content.split('\n').map((line, i) => (
-                      <p key={i} className={i > 0 ? 'mt-2' : ''}>
-                        {line}
-                      </p>
-                    ))}
+                    {message.isThinking ? (
+                      <div className="flex items-center gap-2">
+                        <span>{message.content}</span>
+                        <div className="flex gap-1">
+                          <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    ) : (
+                      message.content.split('\n').map((line, i) => (
+                        <p key={i} className={i > 0 ? 'mt-2' : ''}>
+                          {line}
+                        </p>
+                      ))
+                    )}
                   </div>
 
                   {/* 推荐卡片 */}

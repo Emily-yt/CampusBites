@@ -7,6 +7,7 @@ export interface Message {
   content: string;
   recommendations?: Restaurant[];
   timestamp: Date;
+  isThinking?: boolean;
 }
 
 export interface ChatSession {
