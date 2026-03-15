@@ -131,8 +131,10 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
       const response = await fetch(`${API_BASE_URL}/users/${userId}/preferences`);
       const data = await response.json();
 
-      if (response.ok && data.data?.preferences) {
-        const prefs = data.data.preferences;
+      console.log('fetchUserPreferences response:', data);
+
+      if (response.ok && data.data) {
+        const prefs = data.data;
         setTastePreferences(prefs.taste_types || []);
         setCuisinePreferences(prefs.cuisine_types || []);
         setBudgetPreference(prefs.budget_preference || '');
