@@ -140,7 +140,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       
       // 添加思考阶段2 - 正在搜索
       setMessages((prev) => prev.map(msg => 
-        msg.id === thinkingId1 
+        msg.id === thinkingId1 && msg.type === 'ai' && msg.isThinking
           ? { ...msg, content: '正在为你寻找合适的餐厅...' }
           : msg
       ));
