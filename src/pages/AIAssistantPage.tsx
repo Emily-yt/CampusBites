@@ -701,6 +701,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
           isOpen={showCompareModal}
           onClose={() => {
             setShowCompareModal(false);
+            setSelectedRestaurantsForCompare([]);
           }}
           restaurants={selectedRestaurantsForCompare}
           onNavigateToRestaurant={onNavigateToRestaurant}
