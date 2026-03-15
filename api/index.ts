@@ -605,17 +605,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 添加打卡活动
       if (checkinsWithRestaurants) {
         for (const checkin of checkinsWithRestaurants) {
+          const date = new Date(checkin.created_at);
           activities.push({
             id: `checkin-${checkin.id}`,
             type: 'checkin',
             icon: 'MapPin',
             content: `打卡了 "${checkin.restaurant?.name || '未知餐厅'}"`,
-            time: new Date(checkin.created_at).toLocaleString('zh-CN', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
+            time: `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+            timestamp: checkin.created_at,
           });
         }
       }
@@ -623,23 +620,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 添加收藏活动
       if (favoritesWithRestaurants) {
         for (const favorite of favoritesWithRestaurants) {
+          const date = new Date(favorite.created_at);
           activities.push({
             id: `favorite-${favorite.id}`,
             type: 'favorite',
             icon: 'Heart',
             content: `收藏了 "${favorite.restaurant?.name || '未知餐厅'}"`,
-            time: new Date(favorite.created_at).toLocaleString('zh-CN', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
+            time: `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+            timestamp: favorite.created_at,
           });
         }
       }
       
       // 按时间排序，取最近的10条
-      activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       const recentActivities = activities.slice(0, 10);
 
       return successResponse(res, {
