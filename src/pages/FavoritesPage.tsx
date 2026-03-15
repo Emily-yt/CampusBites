@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Heart, Star, MapPin, DollarSign, Trash2 } from 'lucide-react';
-import { supabase, getUserSession } from '../lib/supabase';
+import { useEffect, useState, useRef } from 'react';
+import { Star, Trash2 } from 'lucide-react';
+import { favoriteApi } from '../lib/api';
+import { getUserSession } from '../lib/supabase';
 import type { Restaurant } from '../lib/database.types';
 
 interface FavoritesPageProps {
@@ -10,32 +11,16 @@ interface FavoritesPageProps {
 export function FavoritesPage({ onNavigateToRestaurant }: FavoritesPageProps) {
   const [favorites, setFavorites] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadFavorites();
-  }, []);
+  const lastUpdatedRef = useRef<string | null>(null);
 
   async function loadFavorites() {
+    console.log('Loading favorites...');
     try {
       const session = getUserSession();
-
-      const { data: favoritesData } = await supabase
-        .from('favorites')
-        .select('restaurant_id')
-        .eq('user_session', session);
-
-      if (favoritesData && favoritesData.length > 0) {
-        const restaurantIds = favoritesData.map(f => f.restaurant_id);
-
-        const { data: restaurantsData } = await supabase
-          .from('restaurants')
-          .select('*')
-          .in('id', restaurantIds);
-
-        setFavorites(restaurantsData || []);
-      } else {
-        setFavorites([]);
-      }
+      console.log('Session:', session);
+      const { data } = await favoriteApi.getFavorites(session);
+      console.log('Favorites data:', data);
+      setFavorites(data || []);
     } catch (error) {
       console.error('Error loading favorites:', error);
     } finally {
@@ -43,146 +28,94 @@ export function FavoritesPage({ onNavigateToRestaurant }: FavoritesPageProps) {
     }
   }
 
+  useEffect(() => {
+    loadFavorites();
+    
+    // 立即检查一次当前的 localStorage 值
+    const initialUpdated = localStorage.getItem('favorites_updated');
+    lastUpdatedRef.current = initialUpdated;
+    console.log('Initial favorites_updated:', initialUpdated);
+    
+    const checkForUpdates = () => {
+      const updated = localStorage.getItem('favorites_updated');
+      console.log('Checking for updates. Current:', updated, 'Last:', lastUpdatedRef.current);
+      if (updated && updated !== lastUpdatedRef.current) {
+        console.log('Update detected, reloading favorites...');
+        lastUpdatedRef.current = updated;
+        loadFavorites();
+      }
+    };
+    
+    const interval = setInterval(checkForUpdates, 300);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
   async function removeFavorite(restaurantId: string) {
     try {
       const session = getUserSession();
-
-      await supabase
-        .from('favorites')
-        .delete()
-        .eq('user_session', session)
-        .eq('restaurant_id', restaurantId);
-
-      setFavorites(favorites.filter(f => f.id !== restaurantId));
+      await favoriteApi.removeFavorite(restaurantId, session);
+      setFavorites(favorites.filter(r => r.id !== restaurantId));
+      localStorage.setItem('favorites_updated', Date.now().toString());
     } catch (error) {
       console.error('Error removing favorite:', error);
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
-      </div>
-    );
+  function getCuisineEmoji(cuisineType: string) {
+    const map: { [key: string]: string } = { '中餐': '🥢', '西餐': '🍽️', '日料': '🍱', '韩餐': '🍲', '火锅': '🥘', '烧烤': '🍖', '快餐': '🍔', '甜品': '🍰' };
+    return map[cuisineType] || '🍜';
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-orange-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 mb-4 shadow-lg">
-            <Heart className="text-white" size={32} fill="currentColor" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            我的
-            <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent"> 收藏</span>
-          </h1>
-          <p className="text-gray-600 text-lg">
-            {favorites.length > 0 ? `你收藏了${favorites.length}家餐厅` : '还没有收藏任何餐厅'}
-          </p>
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* 页面标题 */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">我的收藏</h1>
+          <p className="text-gray-600 mt-1">共收藏了 {favorites.length} 家餐厅</p>
         </div>
 
-        {favorites.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-16 text-center border border-gray-100">
-            <div className="text-6xl mb-4">💝</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">还没有收藏</h3>
-            <p className="text-gray-600 mb-6">
-              浏览餐厅时点击收藏按钮，将喜欢的餐厅保存到这里
-            </p>
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-amber-100 p-12 text-center">
+            <div className="text-gray-400">加载中...</div>
+          </div>
+        ) : favorites.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-amber-100 p-12 text-center">
+            <p className="text-gray-600 mb-2">还没有收藏任何餐厅</p>
+            <p className="text-gray-400 text-sm">去探索页面发现美食吧</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {favorites.map((restaurant) => (
-              <div
-                key={restaurant.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden group border border-gray-100 relative"
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFavorite(restaurant.id);
-                  }}
-                  className="absolute top-3 right-3 z-10 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-red-500 hover:bg-red-50 transition-all"
-                  title="取消收藏"
-                >
-                  <Trash2 size={18} />
-                </button>
-
-                <div
-                  onClick={() => onNavigateToRestaurant(restaurant.id)}
-                  className="cursor-pointer"
-                >
-                  <div className="h-48 bg-gradient-to-br from-red-100 via-pink-100 to-orange-100 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform">
-                    🍽️
+              <div key={restaurant.id} className="bg-white rounded-2xl border border-amber-100 overflow-hidden hover:shadow-md transition-shadow">
+                <div className="flex">
+                  <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-4xl flex-shrink-0">
+                    {getCuisineEmoji(restaurant.cuisine_type)}
                   </div>
-
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-red-600 transition-colors flex-1 pr-2">
-                        {restaurant.name}
-                      </h3>
-                      <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-medium rounded flex-shrink-0">
-                        {restaurant.cuisine_type}
-                      </span>
-                    </div>
-
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {restaurant.description}
-                    </p>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <Star className="text-yellow-500" size={16} fill="currentColor" />
-                          <span className="font-bold text-gray-900">{restaurant.rating.toFixed(1)}</span>
-                          <span className="text-gray-500 text-sm">({restaurant.review_count}条)</span>
+                  <div className="flex-1 p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-800 line-clamp-1">{restaurant.name}</h3>
+                        <p className="text-sm text-amber-600 line-clamp-1">{restaurant.cuisine_type}</p>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
+                          <span className="flex items-center gap-1"><Star size={12} className="text-yellow-500" /> {restaurant.rating.toFixed(1)}</span>
+                          <span>¥{restaurant.avg_price}</span>
                         </div>
-                        <span className="text-red-600 font-bold text-lg">¥{restaurant.avg_price}</span>
                       </div>
-
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin size={14} className="mr-1 text-blue-500" />
-                        <span>{restaurant.school}</span>
-                        <span className="mx-2">·</span>
-                        <span>{restaurant.distance_km}km</span>
-                      </div>
+                      <button onClick={() => removeFavorite(restaurant.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-
-                    {restaurant.hours && (
-                      <div className="mt-3 text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-                        {restaurant.hours}
-                      </div>
-                    )}
                   </div>
                 </div>
+                <button onClick={() => onNavigateToRestaurant(restaurant.id)} className="w-full py-2 bg-amber-50 text-sm text-amber-600 font-medium hover:bg-amber-100 transition-colors">
+                  查看详情
+                </button>
               </div>
             ))}
-          </div>
-        )}
-
-        {favorites.length > 0 && (
-          <div className="mt-8 bg-white rounded-xl shadow-md p-6 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">收藏统计</h3>
-                <p className="text-gray-600 text-sm">你已收藏{favorites.length}家餐厅</p>
-              </div>
-              <div className="flex items-center space-x-6 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {(favorites.reduce((sum, r) => sum + r.rating, 0) / favorites.length).toFixed(1)}
-                  </div>
-                  <div className="text-xs text-gray-500">平均评分</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    ¥{Math.round(favorites.reduce((sum, r) => sum + r.avg_price, 0) / favorites.length)}
-                  </div>
-                  <div className="text-xs text-gray-500">平均价格</div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

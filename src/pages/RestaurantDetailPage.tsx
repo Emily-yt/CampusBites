@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Star, MapPin, DollarSign, Phone, Clock, Heart, ThumbsUp } from 'lucide-react';
-import { supabase, getUserSession } from '../lib/supabase';
+import { ArrowLeft, Star, MapPin, DollarSign, Phone, Clock, Share2 } from 'lucide-react';
+import { FavoriteButton } from '../components/FavoriteButton';
+import { restaurantApi, menuApi, reviewApi } from '../lib/api';
 import type { Restaurant, Review, MenuItem } from '../lib/database.types';
 
 interface RestaurantDetailPageProps {
@@ -12,7 +13,6 @@ export function RestaurantDetailPage({ restaurantId, onBack }: RestaurantDetailP
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'menu' | 'reviews'>('menu');
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -20,374 +20,215 @@ export function RestaurantDetailPage({ restaurantId, onBack }: RestaurantDetailP
 
   useEffect(() => {
     loadRestaurantData();
-    checkFavorite();
   }, [restaurantId]);
 
   async function loadRestaurantData() {
+    setLoading(true);
+    const startTime = Date.now();
+    const minLoadingTime = 600;
+
     try {
-      const { data: restaurantData } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', restaurantId)
-        .maybeSingle();
-
-      const { data: reviewsData } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('restaurant_id', restaurantId)
-        .order('created_at', { ascending: false });
-
-      const { data: menuData } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('restaurant_id', restaurantId)
-        .order('is_recommended', { ascending: false });
-
-      setRestaurant(restaurantData);
-      setReviews(reviewsData || []);
-      setMenuItems(menuData || []);
+      // 从后端 API 获取餐厅详情
+      const { data: restaurantData } = await restaurantApi.getById(restaurantId);
+      if (restaurantData) {
+        setRestaurant(restaurantData);
+        
+        // 获取菜单
+        const { data: menuData } = await menuApi.getByRestaurantId(restaurantId);
+        setMenuItems(menuData || []);
+        
+        // 获取评价
+        const { data: reviewsData } = await reviewApi.getByRestaurantId(restaurantId);
+        setReviews(reviewsData || []);
+      }
     } catch (error) {
       console.error('Error loading restaurant data:', error);
     } finally {
-      setLoading(false);
-    }
-  }
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
 
-  async function checkFavorite() {
-    try {
-      const session = getUserSession();
-      const { data } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('user_session', session)
-        .eq('restaurant_id', restaurantId)
-        .maybeSingle();
-
-      setIsFavorite(!!data);
-    } catch (error) {
-      console.error('Error checking favorite:', error);
-    }
-  }
-
-  async function toggleFavorite() {
-    try {
-      const session = getUserSession();
-
-      if (isFavorite) {
-        await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_session', session)
-          .eq('restaurant_id', restaurantId);
-        setIsFavorite(false);
-      } else {
-        await supabase
-          .from('favorites')
-          .insert({ user_session: session, restaurant_id: restaurantId });
-        setIsFavorite(true);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
+      setTimeout(() => {
+        setLoading(false);
+      }, remainingTime);
     }
   }
 
   async function submitReview() {
-    if (!newReview.userName || !newReview.content) return;
-
+    if (!newReview.userName || !newReview.content || !restaurant) return;
+    
     try {
-      await supabase.from('reviews').insert({
+      const reviewData = {
         restaurant_id: restaurantId,
         user_name: newReview.userName,
         rating: newReview.rating,
         content: newReview.content,
-      });
-
+        images: [],
+      };
+      
+      await reviewApi.create(reviewData);
+      
+      // 重新加载评价
+      const { data: reviewsData } = await reviewApi.getByRestaurantId(restaurantId);
+      setReviews(reviewsData || []);
+      
       setNewReview({ userName: '', rating: 5, content: '' });
       setShowReviewForm(false);
-      loadRestaurantData();
     } catch (error) {
       console.error('Error submitting review:', error);
     }
   }
 
-  if (loading || !restaurant) {
+  function getCuisineEmoji(cuisineType: string) {
+    const map: { [key: string]: string } = { '中餐': '🥢', '西餐': '🍽️', '日料': '🍱', '韩餐': '🍲', '火锅': '🥘', '烧烤': '🍖', '快餐': '🍔', '甜品': '🍰' };
+    return map[cuisineType] || '🍜';
+  }
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center">
+        <div className="text-gray-400">加载中...</div>
+      </div>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-amber-100 p-12 text-center">
+          <div className="text-6xl mb-4">😕</div>
+          <p className="text-gray-600">未找到该餐厅</p>
+          <button onClick={onBack} className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">返回</button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-medium">返回</span>
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+      {/* 顶部导航 */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-amber-100 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
+          <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-medium transition-colors">
+            <ArrowLeft size={18} /> <span>返回</span>
           </button>
-          <button
-            onClick={toggleFavorite}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-              isFavorite
-                ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
-            <span className="font-medium">{isFavorite ? '已收藏' : '收藏'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigator.clipboard.writeText(window.location.href)} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-amber-50 rounded-full transition-colors">
+              <Share2 size={18} />
+            </button>
+            <FavoriteButton restaurantId={restaurantId} size={20} />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6 border border-gray-100">
-          <div className="h-64 bg-gradient-to-br from-orange-100 via-red-100 to-pink-100 flex items-center justify-center text-8xl">
-            🍽️
+      <div className="max-w-4xl mx-auto px-6 py-6">
+        {/* 餐厅头部 */}
+        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden mb-6">
+          <div className="h-40 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-7xl">
+            {getCuisineEmoji(restaurant.cuisine_type)}
           </div>
-
-          <div className="p-8">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{restaurant.name}</h1>
-                <p className="text-gray-600 text-lg">{restaurant.description}</p>
+          <div className="p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">{restaurant.name}</h1>
+                <span className="text-sm text-amber-600 font-medium">{restaurant.cuisine_type}</span>
               </div>
-              <span className="ml-4 px-4 py-2 bg-orange-50 text-orange-600 font-medium rounded-lg">
-                {restaurant.cuisine_type}
-              </span>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl">
-                <div className="flex items-center space-x-2 mb-1">
-                  <Star className="text-yellow-500" size={20} fill="currentColor" />
-                  <span className="text-sm text-gray-600 font-medium">评分</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{restaurant.rating.toFixed(1)}</div>
-                <div className="text-xs text-gray-500">{restaurant.review_count}条评价</div>
+            <p className="text-gray-600 mb-4">{restaurant.description}</p>
+            
+            {/* 核心信息 */}
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="bg-amber-50 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center gap-1 text-amber-600 text-xs mb-1"><Star size={12} /> 评分</div>
+                <div className="font-bold text-gray-800 text-lg">{restaurant.rating.toFixed(1)}</div>
               </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl">
-                <div className="flex items-center space-x-2 mb-1">
-                  <DollarSign className="text-green-500" size={20} />
-                  <span className="text-sm text-gray-600 font-medium">人均</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">¥{restaurant.avg_price}</div>
-                <div className="text-xs text-gray-500">价格适中</div>
+              <div className="bg-amber-50 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center gap-1 text-amber-600 text-xs mb-1"><DollarSign size={12} /> 人均</div>
+                <div className="font-bold text-gray-800 text-lg">¥{restaurant.avg_price}</div>
               </div>
-
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-xl">
-                <div className="flex items-center space-x-2 mb-1">
-                  <MapPin className="text-blue-500" size={20} />
-                  <span className="text-sm text-gray-600 font-medium">距离</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{restaurant.distance_km}km</div>
-                <div className="text-xs text-gray-500">{restaurant.school}</div>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
-                <div className="flex items-center space-x-2 mb-1">
-                  <Clock className="text-purple-500" size={20} />
-                  <span className="text-sm text-gray-600 font-medium">营业</span>
-                </div>
-                <div className="text-sm font-bold text-gray-900 mt-2">{restaurant.hours || '全天'}</div>
+              <div className="bg-amber-50 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center gap-1 text-amber-600 text-xs mb-1"><Clock size={12} /> 营业</div>
+                <div className="font-bold text-gray-800">{restaurant.hours || '-'}</div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <MapPin className="text-blue-500" size={20} />
-                  <div>
-                    <div className="text-sm text-gray-500">地址</div>
-                    <div className="font-medium">{restaurant.address}</div>
-                  </div>
-                </div>
-                {restaurant.phone && (
-                  <div className="flex items-center space-x-3 text-gray-700">
-                    <Phone className="text-green-500" size={20} />
-                    <div>
-                      <div className="text-sm text-gray-500">电话</div>
-                      <div className="font-medium">{restaurant.phone}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* 联系信息 */}
+            <div className="flex gap-4 text-sm text-gray-600">
+              <span className="flex items-center gap-1"><MapPin size={14} className="text-amber-500" /> {restaurant.address}</span>
+              {restaurant.phone && <span className="flex items-center gap-1"><Phone size={14} className="text-amber-500" /> {restaurant.phone}</span>}
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="border-b border-gray-200">
-            <div className="flex">
-              <button
-                onClick={() => setActiveTab('menu')}
-                className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                  activeTab === 'menu'
-                    ? 'text-orange-600 border-b-2 border-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                菜单 ({menuItems.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('reviews')}
-                className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                  activeTab === 'reviews'
-                    ? 'text-orange-600 border-b-2 border-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                评价 ({reviews.length})
-              </button>
-            </div>
+        {/* 标签页 */}
+        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden">
+          <div className="flex border-b border-amber-100">
+            <button onClick={() => setActiveTab('menu')} className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'menu' ? 'text-amber-600 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-500 hover:text-gray-700'}`}>菜单 ({menuItems.length})</button>
+            <button onClick={() => setActiveTab('reviews')} className={`flex-1 py-3 text-sm font-semibold transition-colors ${activeTab === 'reviews' ? 'text-amber-600 border-b-2 border-amber-500 bg-amber-50' : 'text-gray-500 hover:text-gray-700'}`}>评价 ({reviews.length})</button>
           </div>
 
-          <div className="p-6">
+          <div className="p-5">
             {activeTab === 'menu' && (
-              <div className="space-y-4">
+              <div>
                 {menuItems.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="bg-white rounded-2xl border border-amber-100 p-12 text-center">
                     <div className="text-4xl mb-3">📋</div>
-                    <p className="text-gray-500">暂无菜单信息</p>
+                    <p className="text-gray-600">暂无菜单</p>
                   </div>
                 ) : (
-                  menuItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
-                          {item.is_recommended && (
-                            <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
-                              推荐
-                            </span>
-                          )}
-                        </div>
-                        {item.description && (
-                          <p className="text-gray-600 text-sm">{item.description}</p>
-                        )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {menuItems.map((item, index) => (
+                      <div key={item.id} className="flex items-center gap-2 p-3 bg-amber-50 rounded-xl">
+                        <span className="w-6 h-6 flex items-center justify-center text-xs bg-amber-200 text-amber-700 rounded-full flex-shrink-0">
+                          {index + 1}
+                        </span>
+                        <span className="font-medium text-gray-800 truncate flex-1">{item.name}</span>
+                        {item.is_recommended && <span className="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded flex-shrink-0">推荐</span>}
                       </div>
-                      <div className="ml-4 text-xl font-bold text-orange-600">
-                        ¥{item.price.toFixed(0)}
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             )}
 
             {activeTab === 'reviews' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-gray-900">学生评价</h3>
-                  <button
-                    onClick={() => setShowReviewForm(!showReviewForm)}
-                    className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-all font-medium"
-                  >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm text-gray-500">{reviews.length} 条评价</span>
+                  <button onClick={() => setShowReviewForm(!showReviewForm)} className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-full hover:bg-amber-600 transition-colors">
                     {showReviewForm ? '取消' : '写评价'}
                   </button>
                 </div>
 
                 {showReviewForm && (
-                  <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          昵称
-                        </label>
-                        <input
-                          type="text"
-                          value={newReview.userName}
-                          onChange={(e) => setNewReview({ ...newReview, userName: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="输入你的昵称"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          评分
-                        </label>
-                        <div className="flex space-x-2">
-                          {[1, 2, 3, 4, 5].map((rating) => (
-                            <button
-                              key={rating}
-                              onClick={() => setNewReview({ ...newReview, rating })}
-                              className="transition-transform hover:scale-110"
-                            >
-                              <Star
-                                size={32}
-                                className={rating <= newReview.rating ? 'text-yellow-500' : 'text-gray-300'}
-                                fill={rating <= newReview.rating ? 'currentColor' : 'none'}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          评价内容
-                        </label>
-                        <textarea
-                          value={newReview.content}
-                          onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                          rows={4}
-                          placeholder="分享你的用餐体验..."
-                        />
-                      </div>
-
-                      <button
-                        onClick={submitReview}
-                        className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-all font-medium"
-                      >
-                        提交评价
-                      </button>
+                  <div className="bg-amber-50 p-4 rounded-xl mb-4">
+                    <input type="text" placeholder="昵称" value={newReview.userName} onChange={(e) => setNewReview({ ...newReview, userName: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm mb-3 focus:outline-none focus:border-amber-400" />
+                    <div className="flex gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map(r => (
+                        <button key={r} onClick={() => setNewReview({ ...newReview, rating: r })}><Star size={24} className={r <= newReview.rating ? 'text-yellow-500' : 'text-gray-300'} fill={r <= newReview.rating ? 'currentColor' : 'none'} /></button>
+                      ))}
                     </div>
+                    <textarea placeholder="评价内容" value={newReview.content} onChange={(e) => setNewReview({ ...newReview, content: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-amber-200 text-sm mb-3 focus:outline-none focus:border-amber-400" rows={3} />
+                    <button onClick={submitReview} disabled={!newReview.userName || !newReview.content} className="w-full py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50">提交</button>
                   </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {reviews.length === 0 ? (
-                    <div className="text-center py-12">
+                    <div className="bg-white rounded-2xl border border-amber-100 p-12 text-center">
                       <div className="text-4xl mb-3">💬</div>
-                      <p className="text-gray-500">暂无评价，来写第一条吧</p>
+                      <p className="text-gray-600">暂无评价</p>
                     </div>
                   ) : (
-                    reviews.map((review) => (
-                      <div key={review.id} className="bg-gray-50 p-6 rounded-xl">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="font-bold text-gray-900 mb-1">{review.user_name}</div>
-                            <div className="flex items-center space-x-2">
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    size={16}
-                                    className={star <= review.rating ? 'text-yellow-500' : 'text-gray-300'}
-                                    fill={star <= review.rating ? 'currentColor' : 'none'}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-sm text-gray-500">
-                                {new Date(review.created_at).toLocaleDateString('zh-CN')}
-                              </span>
-                            </div>
+                    reviews.map(review => (
+                      <div key={review.id} className="p-4 bg-amber-50 rounded-xl">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-gray-800">{review.user_name}</span>
+                          <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <span>{Array(5).fill(0).map((_, i) => <Star key={i} size={12} className={i < review.rating ? 'text-yellow-500' : 'text-gray-300'} fill={i < review.rating ? 'currentColor' : 'none'} />)}</span>
+                            <span>{new Date(review.created_at).toLocaleDateString('zh-CN')}</span>
                           </div>
-                          <button className="flex items-center space-x-1 text-gray-500 hover:text-orange-600 transition-colors">
-                            <ThumbsUp size={16} />
-                            <span className="text-sm">{review.helpful_count}</span>
-                          </button>
                         </div>
-                        <p className="text-gray-700 leading-relaxed">{review.content}</p>
+                        <p className="text-gray-600 text-sm">{review.content}</p>
                       </div>
                     ))
                   )}

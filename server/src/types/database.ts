@@ -149,50 +149,11 @@ export interface Database {
           created_at?: string
         }
       }
-      users: {
-        Row: {
-          id: string
-          email: string | null
-          phone: string | null
-          name: string
-          avatar: string | null
-          school: string | null
-          bio: string | null
-          password_hash: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          email?: string | null
-          phone?: string | null
-          name: string
-          avatar?: string | null
-          school?: string | null
-          bio?: string | null
-          password_hash: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string | null
-          phone?: string | null
-          name?: string
-          avatar?: string | null
-          school?: string | null
-          bio?: string | null
-          password_hash?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
     }
   }
 }
 
-export type Restaurant = Database['public']['Tables']['restaurants']['Row'];
-export type Review = Database['public']['Tables']['reviews']['Row'];
-export type MenuItem = Database['public']['Tables']['menu_items']['Row'];
-export type Favorite = Database['public']['Tables']['favorites']['Row'];
-export type User = Database['public']['Tables']['users']['Row'];
+export type Restaurant = Database['public']['Tables']['restaurants']['Row']
+export type Review = Database['public']['Tables']['reviews']['Row']
+export type MenuItem = Database['public']['Tables']['menu_items']['Row']
+export type Favorite = Database['public']['Tables']['favorites']['Row']

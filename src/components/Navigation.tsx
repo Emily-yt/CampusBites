@@ -1,33 +1,32 @@
-import { Home, Map, TrendingUp, Sparkles, Heart } from 'lucide-react';
+import { Home, Map, Sparkles, User } from 'lucide-react';
 
 interface NavigationProps {
   currentPage: string;
   onNavigate: (page: string) => void;
+  isLoggedIn: boolean;
+  onLoginClick: () => void;
 }
 
-export function Navigation({ currentPage, onNavigate }: NavigationProps) {
+export function Navigation({ currentPage, onNavigate, isLoggedIn, onLoginClick }: NavigationProps) {
   const navItems = [
     { id: 'home', label: '首页', icon: Home },
-    { id: 'explore', label: '地图探索', icon: Map },
-    { id: 'rankings', label: '推荐榜单', icon: TrendingUp },
+    { id: 'explore', label: '探索', icon: Map },
     { id: 'ai-assistant', label: 'AI助手', icon: Sparkles },
-    { id: 'favorites', label: '我的收藏', icon: Heart },
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <button
-              onClick={() => onNavigate('home')}
-              className="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent hover:from-orange-600 hover:to-red-600 transition-all"
-            >
-              🍜 校园美食探索
-            </button>
-          </div>
+    <nav className="bg-white border-b border-amber-100 sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex items-center justify-between h-14">
+          <button
+            onClick={() => onNavigate('home')}
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
+            <img src="/favicon.png" alt="CampusBites" className="w-10 h-10" />
+            <span className="text-xl font-bold text-gray-900">CampusBites</span>
+          </button>
 
-          <div className="hidden md:flex space-x-1">
+          <div className="flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPage === item.id;
@@ -35,41 +34,40 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-orange-50 text-orange-600 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'text-gray-600 hover:text-amber-600 hover:bg-amber-50'
                   }`}
                 >
-                  <Icon size={18} />
+                  <Icon size={16} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
-          </div>
-        </div>
-      </div>
 
-      <div className="md:hidden border-t border-gray-200">
-        <div className="flex justify-around py-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentPage === item.id;
-            return (
+            {/* 登录/个人中心 按钮 */}
+            {isLoggedIn ? (
               <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center space-y-1 px-3 py-1 rounded-lg transition-all ${
-                  isActive
-                    ? 'text-orange-600'
-                    : 'text-gray-500'
+                onClick={() => onNavigate('profile')}
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentPage === 'profile'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'text-gray-600 hover:text-amber-600 hover:bg-amber-50'
                 }`}
               >
-                <Icon size={20} />
-                <span className="text-xs">{item.label}</span>
+                <User size={16} />
+                <span>个人中心</span>
               </button>
-            );
-          })}
+            ) : (
+              <button
+                onClick={onLoginClick}
+                className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+              >
+                登录/注册
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>
