@@ -177,8 +177,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && !route.includes('/')) {
-      const idStr = route.replace('restaurants/', '');
-      console.log('Looking for restaurant with id:', idStr);
+      let idStr = route.replace('restaurants/', '');
+      console.log('Raw restaurant id:', idStr);
+      
+      if (idStr.includes(':')) {
+        idStr = idStr.split(':')[0];
+        console.log('Cleaned restaurant id:', idStr);
+      }
       
       let data = null;
       let error = null;
@@ -220,7 +225,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && route.includes('/reviews') && req.method === 'GET') {
-      const idStr = route.replace('/reviews', '').replace('restaurants/', '');
+      let idStr = route.replace('/reviews', '').replace('restaurants/', '');
+      if (idStr.includes(':')) {
+        idStr = idStr.split(':')[0];
+      }
       const numId = parseInt(idStr, 10);
       
       let query = supabase.from('reviews').select('*');
@@ -237,7 +245,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route.startsWith('restaurants/') && route.includes('/menu') && req.method === 'GET') {
-      const idStr = route.replace('/menu', '').replace('restaurants/', '');
+      let idStr = route.replace('/menu', '').replace('restaurants/', '');
+      if (idStr.includes(':')) {
+        idStr = idStr.split(':')[0];
+      }
       const numId = parseInt(idStr, 10);
       
       let restaurantQuery = supabase.from('restaurants').select('description, avg_price');
