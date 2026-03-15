@@ -608,8 +608,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           activities.push({
             id: `checkin-${checkin.id}`,
             type: 'checkin',
-            description: `打卡了 "${checkin.restaurant?.name || '未知餐厅'}"`,
-            timestamp: checkin.created_at,
+            icon: 'MapPin',
+            content: `打卡了 "${checkin.restaurant?.name || '未知餐厅'}"`,
+            time: new Date(checkin.created_at).toLocaleString('zh-CN', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
           });
         }
       }
@@ -620,14 +626,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           activities.push({
             id: `favorite-${favorite.id}`,
             type: 'favorite',
-            description: `收藏了 "${favorite.restaurant?.name || '未知餐厅'}"`,
-            timestamp: favorite.created_at,
+            icon: 'Heart',
+            content: `收藏了 "${favorite.restaurant?.name || '未知餐厅'}"`,
+            time: new Date(favorite.created_at).toLocaleString('zh-CN', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
           });
         }
       }
       
       // 按时间排序，取最近的10条
-      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
       const recentActivities = activities.slice(0, 10);
 
       return successResponse(res, {
