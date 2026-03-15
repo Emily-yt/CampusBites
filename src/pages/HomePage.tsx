@@ -40,12 +40,25 @@ export function HomePage({ onNavigateToRestaurant, onNavigateToRankings }: HomeP
   async function loadData() {
     const startTime = Date.now();
     const minLoadingTime = 600;
+    const today = new Date().toDateString();
 
     try {
-      // 获取今日推荐（高评分餐厅）
-      const { data: recommendationsData } = await restaurantApi.getTodayRecommendations(3);
-      if (recommendationsData) {
+      // 获取今日推荐（每天只刷新一次）
+      let recommendationsData = null;
+      const cachedRecommendations = localStorage.getItem('todayRecommendations');
+      const cachedDate = localStorage.getItem('todayRecommendationsDate');
+      
+      if (cachedRecommendations && cachedDate === today) {
+        recommendationsData = JSON.parse(cachedRecommendations);
         setTodayRecommendations(recommendationsData);
+      } else {
+        const { data: freshData } = await restaurantApi.getTodayRecommendations(3);
+        if (freshData) {
+          recommendationsData = freshData;
+          setTodayRecommendations(recommendationsData);
+          localStorage.setItem('todayRecommendations', JSON.stringify(recommendationsData));
+          localStorage.setItem('todayRecommendationsDate', today);
+        }
       }
 
       // 获取热门餐厅（最多评价）
