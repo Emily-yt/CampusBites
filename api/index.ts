@@ -200,18 +200,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (route.startsWith('restaurants/') && route.includes('/menu') && req.method === 'GET') {
       const idStr = route.replace('/menu', '').replace('restaurants/', '');
-      const numId = parseInt(idStr, 10);
+      console.log('Menu API called with id:', idStr, 'type:', typeof idStr);
       
-      let restaurantQuery = supabase.from('restaurants').select('description, avg_price');
-      if (!isNaN(numId)) {
-        restaurantQuery = restaurantQuery.eq('id', numId);
+      let restaurant = null;
+      let restaurantError = null;
+      
+      // 先尝试字符串ID
+      const { data: stringData, error: stringError } = await supabase
+        .from('restaurants')
+        .select('description, avg_price')
+        .eq('id', idStr)
+        .maybeSingle();
+      
+      if (stringData) {
+        restaurant = stringData;
       } else {
-        restaurantQuery = restaurantQuery.eq('id', idStr);
+        // 尝试数字ID
+        const numId = parseInt(idStr, 10);
+        if (!isNaN(numId)) {
+          const { data: numData, error: numError } = await supabase
+            .from('restaurants')
+            .select('description, avg_price')
+            .eq('id', numId)
+            .maybeSingle();
+          restaurant = numData;
+          restaurantError = numError;
+        } else {
+          restaurantError = stringError;
+        }
       }
-      
-      const { data: restaurant, error: restaurantError } = await restaurantQuery.single();
 
-      if (restaurantError) throw restaurantError;
+      console.log('Found restaurant for menu:', restaurant);
+      if (restaurantError) {
+        console.error('Restaurant query error:', restaurantError);
+        throw restaurantError;
+      }
 
       if (restaurant?.description) {
         const dishNames = restaurant.description.split(',').map(name => name.trim()).filter(name => name);
@@ -226,9 +249,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           created_at: new Date().toISOString(),
         }));
 
+        console.log('Returning menu items:', menuItems);
         return successResponse(res, menuItems);
       }
 
+      console.log('No description found, returning empty menu');
       return successResponse(res, []);
     }
 

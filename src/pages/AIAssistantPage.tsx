@@ -358,7 +358,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
         </div>
 
         {/* 聊天区域 - 包含侧边栏 */}
-        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden flex relative h-[640px]">
+        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden flex relative h-[720px]">
           {/* 历史会话侧边栏 */}
           <ChatSessionSidebar
             currentSessionId={currentSession?.id || null}
@@ -382,14 +382,14 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
           {/* 聊天内容 */}
           <div className="flex-1 flex flex-col">
             {/* 会话标题栏 */}
-            <div className="h-12 border-b border-amber-100 flex items-center justify-center px-16 relative">
+            <div className="h-14 border-b border-amber-100 flex items-center justify-center px-16 relative">
               <h2 className="font-medium text-gray-800 truncate text-center">
                 {currentSession?.name || '新会话'}
               </h2>
             </div>
             
             {/* 消息列表 */}
-            <div ref={chatContainerRef} className="h-[580px] overflow-y-auto px-8 py-4 space-y-4">
+            <div ref={chatContainerRef} className="h-[660px] overflow-y-auto px-8 py-4 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
