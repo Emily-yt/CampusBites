@@ -121,7 +121,6 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
     }
     
     setInputMessage('');
-    setLoading(true);
     
     // 只在第一次发送消息时隐藏快捷选项
     const isFirstMessage = messages.length === 1;
@@ -217,6 +216,10 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
         setCurrentSession(finalSession);
       }
     } catch (error) {
+      // 移除思考消息（如果存在）
+      const thinkingId1 = (Date.now() - 2000).toString();
+      setMessages((prev) => prev.filter(msg => !msg.isThinking));
+      
       // 添加错误消息
       const errorMessageData = {
         type: 'ai' as const,
@@ -233,8 +236,6 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       };
       
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -523,19 +524,6 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
                 </div>
               </div>
             ))}
-
-            {/* 加载动画 */}
-            {loading && (
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center">
-                  <Bot size={16} />
-                </div>
-                <div className="bg-amber-50 px-4 py-3 rounded-2xl rounded-bl-md flex items-center gap-2">
-                  <Loader2 size={16} className="text-amber-500 animate-spin" />
-                  <span className="text-sm text-gray-600">AI思考中...</span>
-                </div>
-              </div>
-            )}
 
             <div ref={messagesEndRef} />
           </div>
