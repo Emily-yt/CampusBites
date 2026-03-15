@@ -200,19 +200,19 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
 
   function parseUserInput(input: string) {
     // 默认参数
-    let budget = 50;
-    let distance = 3;
+    let budget: number | null = null;
+    let distance: number | null = null;
     let cuisinePreference = '';
     let occasion = '';
 
-    // 解析预算
-    const budgetMatch = input.match(/(\d+)[元块]?/);
+    // 解析预算 - 更精确的匹配，要求有元/块/预算等关键词
+    const budgetMatch = input.match(/(?:预算|人均|不超过|以内|控制在)?\s*(\d+)\s*[元块]/);
     if (budgetMatch) {
       budget = parseInt(budgetMatch[1]);
     }
 
     // 解析距离
-    const distanceMatch = input.match(/(\d+(?:\.\d+)?)\s*公里?/);
+    const distanceMatch = input.match(/(\d+(?:\.\d+)?)\s*公里/);
     if (distanceMatch) {
       distance = parseFloat(distanceMatch[1]);
     }

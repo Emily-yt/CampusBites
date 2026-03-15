@@ -676,11 +676,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       let query = supabase.from('restaurants').select('*');
 
-      if (budget) {
+      if (budget !== null && budget !== undefined) {
         query = query.lte('avg_price', budget);
       }
 
-      if (distance) {
+      if (distance !== null && distance !== undefined) {
         query = query.lte('distance_km', distance);
       }
 
@@ -719,11 +719,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      if (budget) {
+      if (budget !== null && budget !== undefined) {
         aiAnalysis += `\n\n预算控制在 ¥${budget} 以内，性价比很高哦！`;
       }
 
-      if (distance) {
+      if (distance !== null && distance !== undefined) {
         aiAnalysis += `\n\n都在 ${distance} 公里范围内，方便到达！`;
       }
 
