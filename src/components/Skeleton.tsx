@@ -300,8 +300,8 @@ export function Pagination({ currentPage, totalPages, onPageChange, loading }: P
 export function AIAssistantPageSkeleton() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="mb-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mb-6">
           <Skeleton className="h-8 w-32 mb-2" />
           <Skeleton className="h-4 w-48" />
         </div>
