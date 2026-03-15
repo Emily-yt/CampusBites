@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Star, Send, Bot, User, Sparkles, Loader2, MapPin, DollarSign, Clock, Menu, Lightbulb, X, CheckCircle2, Scale } from 'lucide-react';
 import { ChatSessionSidebar } from '../components/ChatSessionSidebar';
 import { RestaurantCompareModal } from '../components/RestaurantCompareModal';
+import { AIAssistantPageSkeleton } from '../components/Skeleton';
 import type { Restaurant } from '../lib/database.types';
 import type { Message, ChatSession } from '../lib/chatSession';
 import { API_BASE_URL } from '../lib/api';
@@ -30,6 +31,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [showQuickOptions, setShowQuickOptions] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showTipsModal, setShowTipsModal] = useState(false);
@@ -46,6 +48,10 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
     setCurrentSession(newSession);
     setMessages(newSession.messages);
     setShowQuickOptions(true);
+    
+    setTimeout(() => {
+      setPageLoading(false);
+    }, 600);
   }, []);
 
   // 页面加载时重置滚动位置到顶部
@@ -346,6 +352,10 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
 
   function clearCompareSelection() {
     setSelectedRestaurantsForCompare([]);
+  }
+
+  if (pageLoading) {
+    return <AIAssistantPageSkeleton />;
   }
 
   return (

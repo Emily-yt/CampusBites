@@ -296,3 +296,78 @@ export function Pagination({ currentPage, totalPages, onPageChange, loading }: P
     </div>
   );
 }
+
+export function AIAssistantPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-32 mb-2" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+
+        <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden flex relative h-[720px]">
+          <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col">
+            <div className="h-14 border-b border-gray-200 px-3 py-3 flex items-center justify-between">
+              <Skeleton className="h-5 w-20" />
+              <div className="flex items-center gap-1">
+                <Skeleton className="w-8 h-8 rounded-lg" />
+                <Skeleton className="w-8 h-8 rounded-lg" />
+              </div>
+            </div>
+            <div className="flex-1 py-2 px-2">
+              <div className="space-y-1">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-2.5 rounded-lg bg-gray-100">
+                    <Skeleton className="h-4 w-32 mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-2 border-t border-gray-200 bg-gray-100">
+              <Skeleton className="h-3 w-16 mx-auto" />
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col">
+            <div className="h-14 border-b border-amber-100 flex items-center justify-center">
+              <Skeleton className="h-5 w-24" />
+            </div>
+
+            <div className="flex-1 px-8 py-4 space-y-4 overflow-y-auto">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={`flex gap-3 ${i % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full flex-shrink-0 ${i % 2 === 0 ? 'bg-amber-100' : 'bg-gradient-to-br from-gray-200 to-gray-300'}`} />
+                  <div className={`max-w-[80%] ${i % 2 === 0 ? 'items-end' : 'items-start'}`}>
+                    <div className={`px-4 py-3 rounded-2xl ${i % 2 === 0 ? 'bg-amber-100 rounded-br-md' : 'bg-gray-100 rounded-bl-md'}`}>
+                      <Skeleton className="h-4 w-40 mb-2" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-8 pb-3">
+              <Skeleton className="h-3 w-20 mb-2" />
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-8 w-20 rounded-full" />
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-amber-100 px-8 py-4">
+              <div className="flex gap-2">
+                <Skeleton className="flex-1 h-12 rounded-xl" />
+                <Skeleton className="w-12 h-12 rounded-xl" />
+              </div>
+              <Skeleton className="h-3 w-64 mx-auto mt-2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
