@@ -674,6 +674,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (route === 'ai/recommend' && req.method === 'POST') {
       const { budget, distance, cuisinePreference, occasion, userQuery } = req.body;
 
+      // 检查是否有有效的搜索条件
+      const hasValidConditions = 
+        (budget !== null && budget !== undefined) || 
+        (distance !== null && distance !== undefined) || 
+        cuisinePreference || 
+        occasion;
+
+      if (!hasValidConditions) {
+        return successResponse(res, {
+          recommendations: [],
+          aiAnalysis: '抱歉，我不太确定你想要什么。你可以告诉我：\n\n• 预算范围（比如：30元以内）\n• 喜欢的菜系（比如：火锅、日料）\n• 用餐场景（比如：约会聚餐、深夜食堂）\n\n我会根据你的需求推荐最合适的餐厅！',
+          totalFound: 0,
+          fallback: true
+        });
+      }
+
       let query = supabase.from('restaurants').select('*');
 
       if (budget !== null && budget !== undefined) {
