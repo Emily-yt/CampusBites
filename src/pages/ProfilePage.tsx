@@ -5,6 +5,7 @@ import { CheckInListModal } from '../components/CheckInListModal';
 import { FavoritesModal } from '../components/FavoritesModal';
 import { ProfilePageSkeleton } from '../components/Skeleton';
 import { getUserSession } from '../lib/supabase';
+import { API_BASE_URL } from '../lib/api';
 
 interface ProfilePageProps {
   onNavigateToRestaurant: (id: string) => void;
@@ -118,7 +119,7 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
   async function fetchUserPreferences(userId: string) {
     setLoadingPreferences(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${userId}/preferences`);
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/preferences`);
       const data = await response.json();
 
       if (response.ok && data.data?.preferences) {
@@ -176,7 +177,7 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
   async function fetchUserStats(userId: string) {
     setLoadingStats(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${userId}/stats`);
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/stats`);
       const data = await response.json();
 
       if (response.ok && data.data) {
@@ -219,7 +220,7 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
     setSuccess(null);
 
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${displayUser.id}`, {
+      const response = await fetch(`${API_BASE_URL}/users/${displayUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -273,7 +274,7 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
 
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${user.id}/preferences`, {
+      const response = await fetch(`${API_BASE_URL}/users/${user.id}/preferences`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
