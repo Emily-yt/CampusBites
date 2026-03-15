@@ -176,25 +176,41 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
       
       addMessageToSession(currentSession.id, aiMessageData);
       
-      // 更新本地状态 - 先只显示文本，不显示推荐
+      // 打字机效果 - 先显示空消息
       const aiMessageId = (Date.now() + 1).toString();
-      const aiMessageWithoutRecs: Message = {
+      const aiMessageEmpty: Message = {
         id: aiMessageId,
         type: 'ai',
-        content: data.data.aiAnalysis,
+        content: '',
         timestamp: new Date(),
       };
       
-      const messagesWithText = [...updatedMessages, aiMessageWithoutRecs];
+      let messagesWithText = [...updatedMessages, aiMessageEmpty];
       setMessages(messagesWithText);
+      
+      // 逐字显示文本
+      const fullText = data.data.aiAnalysis;
+      for (let i = 0; i <= fullText.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const aiMessageWithPartialText: Message = {
+          ...aiMessageEmpty,
+          content: fullText.substring(0, i),
+        };
+        setMessages((prev) => prev.map(msg => 
+          msg.id === aiMessageId ? aiMessageWithPartialText : msg
+        ));
+      }
       
       // 延迟显示推荐卡片
       if (data.data.recommendations && data.data.recommendations.length > 0) {
         await new Promise(resolve => setTimeout(resolve, 400));
         
         const aiMessageWithRecs: Message = {
-          ...aiMessageWithoutRecs,
+          id: aiMessageId,
+          type: 'ai',
+          content: fullText,
           recommendations: data.data.recommendations,
+          timestamp: aiMessageEmpty.timestamp,
         };
         
         const finalMessages = [...updatedMessages, aiMessageWithRecs];

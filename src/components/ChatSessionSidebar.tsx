@@ -59,9 +59,8 @@ export function ChatSessionSidebar({
   }
 
   function handleNewSession() {
-    const newSession = createSession();
-    loadSessions();
     onNewSession();
+    loadSessions();
   }
 
   function handleSessionClick(sessionId: string) {
