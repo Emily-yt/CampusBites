@@ -360,7 +360,7 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         {/* 页面标题 */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">AI 助手</h1>
@@ -392,8 +392,8 @@ export function AIAssistantPage({ onNavigateToRestaurant }: AIAssistantPageProps
           {/* 聊天内容 */}
           <div className="flex-1 flex flex-col">
             {/* 会话标题栏 */}
-            <div className="h-14 border-b border-amber-100 flex items-center justify-center px-16 relative">
-              <h2 className="font-medium text-gray-800 truncate text-center">
+            <div className="h-14 border-b border-amber-100 flex items-center justify-center px-4 relative">
+              <h2 className="font-medium text-gray-800 truncate text-center max-w-[200px]">
                 {currentSession?.name || '新会话'}
               </h2>
             </div>
