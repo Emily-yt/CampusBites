@@ -232,6 +232,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return successResponse(res, []);
     }
 
+    if (route === 'restaurants/schools' && req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('school');
+
+      if (error) throw error;
+      const schools = [...new Set(data?.map(r => r.school) || [])];
+      return successResponse(res, schools);
+    }
+
+    if (route === 'restaurants/cuisine-types' && req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('cuisine_type');
+
+      if (error) throw error;
+      const types = [...new Set(data?.map(r => r.cuisine_type) || [])];
+      return successResponse(res, types);
+    }
+
     if (route.startsWith('restaurants/')) {
       const parts = route.split('/');
       if (parts.length === 2) {
@@ -277,26 +297,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('Found restaurant:', data.name);
         return successResponse(res, data);
       }
-    }
-
-    if (route === 'restaurants/schools' && req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('school');
-
-      if (error) throw error;
-      const schools = [...new Set(data?.map(r => r.school) || [])];
-      return successResponse(res, schools);
-    }
-
-    if (route === 'restaurants/cuisine-types' && req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('cuisine_type');
-
-      if (error) throw error;
-      const types = [...new Set(data?.map(r => r.cuisine_type) || [])];
-      return successResponse(res, types);
     }
 
     if (route.startsWith('favorites') && req.method === 'GET' && !route.includes('/')) {
