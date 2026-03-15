@@ -443,18 +443,13 @@ export function ProfilePage({ onNavigateToRestaurant, onLogout, user }: ProfileP
         {/* 统计数据 */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <button
-            onClick={() => {
-              setIsFavoritesModalOpen(true);
-              if (user?.id) {
-                fetchUserStats(user.id);
-              }
-            }}
+            onClick={() => setIsFavoritesModalOpen(true)}
             className="bg-white rounded-xl border border-amber-100 p-4 text-center hover:bg-amber-50 transition-colors cursor-pointer group"
           >
             <div className="text-2xl font-bold text-amber-600 group-hover:text-amber-700">
               {loadingStats ? '...' : userStats.favorites}
             </div>
-            <div className="text-sm text-gray-500 group-hover:text-gray-700">收藏餐厅</div>
+            <div className="text-sm text-gray-500 group-hover:text-gray-700">我的收藏</div>
           </button>
           <button
             onClick={() => setIsCheckInModalOpen(true)}
