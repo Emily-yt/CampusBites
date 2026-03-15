@@ -833,33 +833,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // GET 请求 - 获取用户偏好
       if (req.method === 'GET') {
-        const { data: user, error } = await supabase
-          .from('users')
-          .select('avatar')
-          .eq('id', id)
-          .single();
+        console.log('GET /preferences for user:', id);
         
-        if (error) throw error;
+        // 从 user_preferences 表获取用户偏好
+        const { data: userPref, error: getError } = await supabase
+          .from('user_preferences')
+          .select('taste_types, cuisine_types, budget_preference')
+          .eq('user_id', id)
+          .maybeSingle();
         
-        // 从 avatar 列解析偏好数据
-        let preferences = {
-          taste_types: [],
-          cuisine_types: [],
-          budget_preference: '',
-        };
-        
-        if (user?.avatar) {
-          try {
-            const parsed = JSON.parse(user.avatar);
-            preferences = { ...preferences, ...parsed };
-          } catch (e) {
-            // avatar 不是 JSON 格式，使用默认值
-          }
+        if (getError) {
+          console.error('Error getting user preferences:', getError);
+          throw getError;
         }
         
+        console.log('Found user preferences:', userPref);
+        
+        // 返回偏好数据，如果没有则返回默认值
         return successResponse(res, {
           id,
-          ...preferences,
+          taste_types: userPref?.taste_types || [],
+          cuisine_types: userPref?.cuisine_types || [],
+          budget_preference: userPref?.budget_preference || '',
           updated_at: new Date().toISOString()
         });
       }
@@ -887,21 +882,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           budget_preference: budget_preference || '',
         };
         
-        console.log('Saving preferences to avatar:', preferences);
+        console.log('Saving preferences to user_preferences:', preferences);
         
-        // 将偏好数据存储在 avatar 列中
-        const { data, error } = await supabase
-          .from('users')
-          .update({ avatar: JSON.stringify(preferences) })
-          .eq('id', id)
-          .select();
+        // 先检查是否已存在记录
+        const { data: existingPref, error: checkError } = await supabase
+          .from('user_preferences')
+          .select('id')
+          .eq('user_id', id)
+          .maybeSingle();
         
-        if (error) {
-          console.error('Supabase update error:', error);
-          throw error;
+        if (checkError) {
+          console.error('Error checking existing preferences:', checkError);
+          throw checkError;
         }
         
-        console.log('Preferences saved successfully:', data);
+        let result;
+        
+        if (existingPref) {
+          // 更新现有记录
+          const { data, error } = await supabase
+            .from('user_preferences')
+            .update(preferences)
+            .eq('user_id', id)
+            .select();
+          
+          if (error) {
+            console.error('Error updating preferences:', error);
+            throw error;
+          }
+          result = data;
+        } else {
+          // 插入新记录
+          const { data, error } = await supabase
+            .from('user_preferences')
+            .insert({
+              user_id: id,
+              ...preferences
+            })
+            .select();
+          
+          if (error) {
+            console.error('Error inserting preferences:', error);
+            throw error;
+          }
+          result = data;
+        }
+        
+        console.log('Preferences saved successfully:', result);
         
         return successResponse(res, {
           id,
